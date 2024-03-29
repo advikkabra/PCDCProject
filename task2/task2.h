@@ -2,7 +2,36 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+
+#define xmalloc(size)                                                           \
+  ({                                                                           \
+    void *ptr = malloc(size);                                                  \
+    if (ptr == NULL) {                                                         \
+      fprintf(stderr, "Memory allocation failed\n");                           \
+      exit(EXIT_FAILURE);                                                      \
+    }                                                                          \
+    ptr;                                                                       \
+  })
+
+#define COLUMN_USERNAME_SIZE 32
+#define COLUMN_EMAIL_SIZE 255
+#define TABLE_MAX_PAGES 100
+
+// define the following for making it easier to use (optional):
+// const uint32_t:
+// ID_SIZE, USERNAME_SIZE, EMAIL_SIZE
+// ID_OFFSET, USERNAME_OFFSET, EMAIL_OFFSET
+// ROW_SIZE
+
+const uint32_t ID_SIZE = sizeof(uint32_t);
+const uint32_t ROW_SIZE = 512;
+const uint32_t PAGE_SIZE = 4096;
+const uint32_t ROWS_PER_PAGE = PAGE_SIZE / ROW_SIZE;
+const uint32_t TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES;
+
 typedef enum { STATEMENT_INSERT, STATEMENT_SELECT } StatementType;
+typedef enum { SUCCESS, INVALID, SYNTAX_ERROR, TABLE_FULL } ResponseCode;
+
 
 #define COLUMN_USERNAME_SIZE 32
 #define COLUMN_EMAIL_SIZE 255

@@ -1,4 +1,4 @@
-#include "Task2.h"
+#include "task2.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
@@ -21,6 +21,13 @@ void print_prompt() { printf("db > "); }
 
 // add pager fxns with the functionalities given in Pager_template
 
+Pager *pager_open(const char *filename){
+
+};
+
+void pager_flush(Pager *pager, uint32_t page_num, uint32_t size){
+    
+}
 // add cursor fxns with the functionalities given in Cursor_template
 
 int main(int argc, char *argv[]) {
