@@ -42,6 +42,22 @@ int fd = open(filename,O_RDWR |      // Read/Write mode
 if (pager->pages[page_num] == NULL) 
     // Cache miss. Allocate memory and load from file.
 
+extern const int ROWS_PER_PAGE;
+extern const int TABLE_MAX_PAGES;
+void *get_page(Pager *pager, uint32_t page_num) {
+  if (page_num > TABLE_MAX_PAGES)
+    return NULL;
+  if (pager->pages[page_num] == NULL) {
+    pager->pages[page_num] = xcalloc(PAGE_SIZE);
+    ssize_t response = read(pager->file_descriptor,
+        pager->pages[page_num], PAGE_SIZE);
+    if (response == -1)
+      return NULL;
+    return pager->pages[page_num];
+  } else {
+    return pager->pages[page_num];
+  }
+}
 
 
 //  flush the cache to disk only when .exit is done. Call db_close() upon exit:
