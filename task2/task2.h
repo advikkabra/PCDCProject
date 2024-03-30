@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 
-#define xmalloc(size)                                                           \
+#define xmalloc(size)                                                          \
   ({                                                                           \
     void *ptr = malloc(size);                                                  \
     if (ptr == NULL) {                                                         \
@@ -13,9 +13,9 @@
     ptr;                                                                       \
   })
 
-#define xcalloc(size)                                                           \
+#define xcalloc(number, size)                                                  \
   ({                                                                           \
-    void *ptr = calloc(size);                                                  \
+    void *ptr = calloc(number, size);                                          \
     if (ptr == NULL) {                                                         \
       fprintf(stderr, "Memory allocation failed\n");                           \
       exit(EXIT_FAILURE);                                                      \
