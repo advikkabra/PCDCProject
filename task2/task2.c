@@ -115,6 +115,50 @@ void cursor_advance(Cursor* cursor)
     }
 }   
 
+// --------------Input--------------
+
+InputBuffer *new_input_buffer() {
+  // allocate memory, initialize other members of the struct
+
+  char *buffer = (char *)xmalloc(ROW_SIZE);
+  InputBuffer *input_buffer = (InputBuffer *)xmalloc(sizeof(InputBuffer));
+
+  input_buffer->buffer = buffer;
+  input_buffer->buffer_length = ROW_SIZE;
+  input_buffer->input_length = 0;
+
+  return input_buffer;
+}
+
+void read_input(InputBuffer *input_buffer) {
+  // takes the input via getline into the buffer
+
+  int charlen =
+      getline(&input_buffer->buffer, &input_buffer->buffer_length, stdin);
+  charlen--;
+  if (!charlen) {
+    printf("Error reading input! Did you type anything?\n");
+    return;
+  }
+
+  input_buffer->buffer[charlen] = '\0';
+  input_buffer->input_length = charlen;
+}
+
+void close_input_buffer(InputBuffer *input_buffer) {
+    free(input_buffer->buffer);
+    free(input_buffer);
+}
+
+// -----------------------------------------
+//
+//
+// -------------- DB ---------------------------
+
+Table *db_open(const char *filename) {
+  Pager *pager = pager_open(filename);
+}
+
 PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *statement){
     char *cursor;
     strtok_r(input_buffer->buffer, " ", &cursor);
