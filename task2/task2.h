@@ -96,6 +96,7 @@ typedef struct {
 } Table;
 
 void *get_page(Pager *pager, uint32_t page_num);
+void *get_last_page(Pager *pager);
 
 typedef struct {
     Table *table;

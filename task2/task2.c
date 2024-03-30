@@ -34,9 +34,13 @@ Pager *pager_open(const char *filename){
 
     Pager* pager = (Pager*)xmalloc(sizeof(Pager));
     pager->file_descriptor = fd;
+    pager->file_length = 0;
     for (int i=0; i < TABLE_MAX_PAGES; i++){
         pager->pages[i] = NULL;
     }
+
+    // Read first page
+    pager->pages[0] = get_page(pager, 0);
     
     return pager;
 };
@@ -56,9 +60,19 @@ void *get_page(Pager *pager, uint32_t page_num) {
         pager->pages[page_num], PAGE_SIZE);
     if (response == -1)
       return NULL;
+    pager->file_length += response;
     return pager->pages[page_num];
   } else {
     return pager->pages[page_num];
+  }
+}
+
+void *get_last_page(Pager *pager) {
+  uint32_t page_num = (pager->file_length) / PAGE_SIZE;
+  
+  //check if current page is incomplete
+  if (pager->file_length % PAGE_SIZE != 0) {
+    return 
   }
 }
 
@@ -156,7 +170,23 @@ void close_input_buffer(InputBuffer *input_buffer) {
 // -------------- DB ---------------------------
 
 Table *db_open(const char *filename) {
-  Pager *pager = pager_open(filename);
+  Table *table = (Table*)xmalloc(sizeof(Table));
+  table->pager = pager_open(filename);
+  table->num_rows = (table->pager->file_length)/(ROW_SIZE);
+
+  return table;
+}
+
+void db_close(Table *table) {
+Pager *pager = table->pager;  
+
+    for (int i = 0; i < TABLE_MAX_PAGES; i++) {
+      if (pager->pages[i])
+        free(pager->pages[i]);
+    }
+
+    free(pager);
+    free(table);
 }
 
 PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *statement){
