@@ -37,7 +37,6 @@ Cursor* table_end(Table* table) {
 // modify implementation accordingly
 
 void* cursor_value(Cursor* cursor){
-
     uint32_t page_num = cursor->row_num / ROWS_PER_PAGE;
     void* page = get_page(cursor->table->pager, page_num);
     if(page == NULL){

@@ -77,12 +77,10 @@ PrepareResult prepare_statement(InputBuffer *input_buffer,
 ExecuteResult execute_insert(Statement *statement, Table *table){
     if (table->num_rows != TABLE_MAX_ROWS){
         table->num_rows++;
-        void* page = get_page(table->pager, table->num_rows / ROWS_PER_PAGE);
-        uint32_t row_offset = table->num_rows % ROWS_PER_PAGE;
-        uint32_t byte_offset = row_offset * ROW_SIZE;
+        Cursor* cursor = table_end(table);
 
         Row *row_to_insert = &(statement->row_to_insert);
-        serialize_row(row_to_insert, row_offset+byte_offset);
+        serialize_row(row_to_insert, cursor_value(cursor));
         return EXECUTE_SUCCESS;
 
     } else {
