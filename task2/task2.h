@@ -111,7 +111,7 @@ void cursor_advance(Cursor *cursor);
 void pager_flush(Pager *pager, uint32_t page_num, uint32_t size);
 void db_close(Table *table);
 MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table);
-PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *statement);
+PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *statement, char *cursor);
 PrepareResult prepare_statement(InputBuffer *input_buffer,
                                 Statement *statement);
 Pager *pager_open(const char *filename);

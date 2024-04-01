@@ -11,6 +11,20 @@
 
 void print_prompt() { printf("db > "); }
 
+void serialize_row(Row *source, void *destination) {
+  memcpy(destination, &(source->id), ID_SIZE);
+  memcpy(destination + ID_SIZE, (source->username), COLUMN_USERNAME_SIZE);
+  memcpy(destination + ID_SIZE + COLUMN_USERNAME_SIZE, (source->email),
+         COLUMN_EMAIL_SIZE);
+}
+
+void deserialize_row(void *source, Row *destination) {
+  memcpy(&(destination->id), source, ID_SIZE);
+  memcpy((destination->username), source + ID_SIZE, COLUMN_USERNAME_SIZE);
+  memcpy((destination->email), source + ID_SIZE + COLUMN_USERNAME_SIZE,
+         COLUMN_EMAIL_SIZE);
+}
+
 // Struct defns given in Task2.h
 // Function declarations are also given in Task2.h
 // You need not use the same fxns,mo dify according to your implementation
@@ -42,15 +56,12 @@ Pager *pager_open(const char *filename)
     pager->pages[i] = NULL;
   }
 
-  // Read first page
-  pager->pages[0] = get_page(pager, 0);
-
   return pager;
 };
 
 void pager_flush(Pager *pager, uint32_t page_num, uint32_t size)
 {
-  off_t offset = lseek(pager->file_descriptor, page_num * PAGE_SIZE, SEEK_SET);
+  off_t offset = lseek(pager->file_descriptor, sizeof(uint32_t) + page_num * PAGE_SIZE, SEEK_SET);
   write(pager->file_descriptor, pager->pages[page_num], size);
 }
 // add cursor fxns with the functionalities given in Cursor_template
@@ -193,19 +204,24 @@ Table *db_open(const char *filename)
 {
   Table *table = (Table *)xmalloc(sizeof(Table));
   table->pager = pager_open(filename);
-  table->num_rows = (table->pager->file_length) / (ROW_SIZE);
+  read(table->pager->file_descriptor, &table->num_rows, sizeof(table->num_rows));
 
   return table;
 }
 
 void db_close(Table *table)
 {
+  lseek(table->pager->file_descriptor, 0, SEEK_SET);
+  write(table->pager->file_descriptor, &table->num_rows, sizeof(uint32_t));
+
   Pager *pager = table->pager;
 
   for (int i = 0; i < TABLE_MAX_PAGES; i++)
   {
-    if (pager->pages[i])
+    if (pager->pages[i]) {
+      pager_flush(pager, i, PAGE_SIZE);
       free(pager->pages[i]);
+    }
   }
 
   free(pager);
@@ -223,12 +239,9 @@ MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table) {
   return META_COMMAND_UNRECOGNIZED_COMMAND;
 }
 
-PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *statement)
+PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *statement, char *cursor)
 {
-  char *cursor;
-  strtok_r(input_buffer->buffer, " ", &cursor);
   statement->type = STATEMENT_INSERT;
-
   Row row = {};
   char *id_s = strtok_r(cursor, " ", &cursor);
   char *username = strtok_r(cursor, " ", &cursor);
@@ -284,7 +297,7 @@ PrepareResult prepare_statement(InputBuffer *input_buffer,
 
   if (strncmp(first_word, "insert", 7) == 0)
   {
-    return prepare_insert(input_buffer, statement);
+    return prepare_insert(input_buffer, statement, cursor);
   }
   else if (strncmp(first_word, "select", 7) == 0)
   {
@@ -309,8 +322,6 @@ ExecuteResult execute_insert(Statement *statement, Table *table)
     Row *row_to_insert = &(statement->row_to_insert);
     serialize_row(row_to_insert, page + byte_offset);
 
-    pager_flush(table->pager,row_offset,sizeof(row_to_insert));
-    
     return EXECUTE_SUCCESS;
   }
   else
@@ -362,7 +373,7 @@ ExecuteResult execute_statement(Statement *statement, Table *table)
 
 int main(int argc, char *argv[])
 {
-  Table *table = db_open(argv); // Replace the actual filename here
+  Table *table = db_open(argv[1]); // Replace the actual filename here
   InputBuffer *input_buffer = new_input_buffer();
   while (true)
   {
